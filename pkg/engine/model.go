@@ -91,9 +91,12 @@ func (m *Model) GetModelMatrix() minemath.Mat4 {
 		{0, 0, 0, 1},
 	}
 
+	// Correct order: Scale -> Rotate -> Translate
 	rotation := minemath.MultiplyMatrices(rotationX, minemath.MultiplyMatrices(rotationY, rotationZ))
 	modelMatrix := minemath.MultiplyMatrices(translation, minemath.MultiplyMatrices(rotation, scale))
+
 	return modelMatrix
+
 }
 
 func randomID() uuid.UUID {

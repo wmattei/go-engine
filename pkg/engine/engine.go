@@ -50,6 +50,9 @@ func NewEngine(game Game) *Engine {
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.CULL_FACE)
+	gl.FrontFace(gl.CCW)
+	gl.CullFace(gl.BACK)
 
 	gl.Enable(gl.DEBUG_OUTPUT)
 	gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)

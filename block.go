@@ -39,46 +39,46 @@ func NewBlock(name string, at minemath.Vec3) *Block {
 						// BACK
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.LIGHT_GREEN},
-								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.LIGHT_GREEN},
-								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.LIGHT_GREEN},
+								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.WHITE},
 							},
 						},
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.LIGHT_GREEN},
-								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.LIGHT_GREEN},
-								{Position: &minemath.Vec3{-.5, .5, -.5}, Color: engine.LIGHT_GREEN},
+								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{-.5, .5, -.5}, Color: engine.WHITE},
 							},
 						},
 						// LEFT
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.RED},
-								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.RED},
-								{Position: &minemath.Vec3{-.5, .5, -.5}, Color: engine.RED},
+								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{-.5, .5, -.5}, Color: engine.WHITE},
 							},
 						},
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.RED},
-								{Position: &minemath.Vec3{-.5, .5, -.5}, Color: engine.RED},
-								{Position: &minemath.Vec3{-.5, .5, .5}, Color: engine.RED},
+								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{-.5, .5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{-.5, .5, .5}, Color: engine.WHITE},
 							},
 						},
 						// RIGHT
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{.5, -.5, .5}, Color: engine.BLUE},
-								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.BLUE},
-								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.BLUE},
+								{Position: &minemath.Vec3{.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.WHITE},
 							},
 						},
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{.5, -.5, .5}, Color: engine.BLUE},
-								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.BLUE},
-								{Position: &minemath.Vec3{.5, .5, .5}, Color: engine.BLUE},
+								{Position: &minemath.Vec3{.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, .5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, .5, .5}, Color: engine.WHITE},
 							},
 						},
 						// TOP
@@ -99,16 +99,16 @@ func NewBlock(name string, at minemath.Vec3) *Block {
 						// BOTTOM
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.LIGHT_BLUE},
-								{Position: &minemath.Vec3{.5, -.5, .5}, Color: engine.LIGHT_BLUE},
-								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.LIGHT_BLUE},
+								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.WHITE},
 							},
 						},
 						{
 							Vertices: [3]engine.Vertex{
-								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.LIGHT_BLUE},
-								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.LIGHT_BLUE},
-								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.LIGHT_BLUE},
+								{Position: &minemath.Vec3{-.5, -.5, .5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{.5, -.5, -.5}, Color: engine.WHITE},
+								{Position: &minemath.Vec3{-.5, -.5, -.5}, Color: engine.WHITE},
 							},
 						},
 					},

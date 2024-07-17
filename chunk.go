@@ -4,8 +4,11 @@ import (
 	"github.com/wmattei/minceraft/pkg/engine"
 )
 
+const WORLD_HEIGHT = 1
+
 type Chunk struct {
-	blocks []*Block
+	blocks   []*Block
+	position [2]int
 }
 
 func (c *Chunk) Update(dt float32, camera *engine.PerspectiveCamera) {
@@ -22,12 +25,20 @@ func (c *Chunk) Render(scene *engine.Scene) {
 	}
 }
 
-func NewSampleChunk() *Chunk {
-	chunk := &Chunk{}
+func NewChunk(x, z int) *Chunk {
+	chunk := &Chunk{
+		position: [2]int{x, z},
+	}
 	for i := 0; i < 16; i++ {
 		for j := 0; j < 16; j++ {
-			block := NewBlock("dirt", [3]float32{float32(i), 0, float32(j)})
-			chunk.blocks = append(chunk.blocks, block)
+			for k := -WORLD_HEIGHT; k < WORLD_HEIGHT; k++ {
+				x := float32(i) + float32(x)*16
+				y := float32(k)
+				z := float32(j) + float32(z)*16
+
+				block := NewBlock("dirt", [3]float32{x, y, z})
+				chunk.blocks = append(chunk.blocks, block)
+			}
 		}
 	}
 

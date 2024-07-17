@@ -1,9 +1,10 @@
 package main
 
 import (
-	minemath "github.com/wmattei/minceraft/math"
 	"github.com/wmattei/minceraft/pkg/engine"
 )
+
+const RENDER_DISTANCE = 2
 
 type Minceraft struct {
 	chunks []*Chunk
@@ -26,7 +27,7 @@ func (m *Minceraft) Render(scene *engine.Scene) {
 }
 
 func (m *Minceraft) GetScreenSize() (int, int) {
-	return 1000, 1000
+	return 1200, 980
 }
 
 func main() {
@@ -35,16 +36,21 @@ func main() {
 		[3]float32{0, 1, 0},
 		0,
 		0,
-		minemath.DegreesToRadians(90),
-		1,
+		90,
+		1200.0/980.0,
 		0.1,
-		100.0,
+		200.0,
 	)
 
-	chunk := NewSampleChunk()
 	game := &Minceraft{
 		camera: cam,
-		chunks: []*Chunk{chunk},
+		chunks: []*Chunk{},
+	}
+	for i := -RENDER_DISTANCE; i < RENDER_DISTANCE; i++ {
+		for j := -RENDER_DISTANCE; j < RENDER_DISTANCE; j++ {
+			chunk := NewChunk(i, j)
+			game.chunks = append(game.chunks, chunk)
+		}
 	}
 
 	eng := engine.NewEngine(game)

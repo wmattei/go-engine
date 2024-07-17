@@ -42,8 +42,9 @@ func GetOrthoGraphicProjectionMatrix(left, right, bottom, top, near, far float32
 }
 
 func GetPerspectiveProjectionMatrix(fov, aspect, near, far float32) Mat4 {
-	f := 1.0 / float32(math.Tan(float64(fov)/2.0))
-	nf := 1 / (near - far)
+	fovRadians := fov * (math.Pi / 180.0)
+	f := 1.0 / float32(math.Tan(float64(fovRadians)/2.0))
+	nf := 1.0 / (near - far)
 
 	return Mat4{
 		{f / aspect, 0, 0, 0},
