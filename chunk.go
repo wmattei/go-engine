@@ -1,47 +1,122 @@
 package main
 
 import (
-	"github.com/wmattei/minceraft/pkg/engine"
+	"math/rand/v2"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
+	minemath "github.com/wmattei/minceraft/math"
 )
 
-const WORLD_HEIGHT = 1
+const WORLD_HEIGHT = 64
 
 type Chunk struct {
-	blocks   []*Block
-	position [2]int
+	Blocks   map[[3]int]*Block
+	Position [2]int
+
+	VAO      uint32
+	VBO      uint32
+	EBO      uint32
+	Vertices []float32
+	Indices  []uint32
 }
 
-func (c *Chunk) Update(dt float32, camera *engine.PerspectiveCamera) {
-	for _, block := range c.blocks {
-		block.NeedsRender = true
+func (c *Chunk) Update() {
+	for _, block := range c.Blocks {
+		block.Update(c)
 	}
 }
 
-func (c *Chunk) Render(scene *engine.Scene) {
-	for _, block := range c.blocks {
-		if block.NeedsRender {
-			block.Render(scene)
+func (chunk *Chunk) Initialize() {
+	gl.GenVertexArrays(1, &chunk.VAO)
+	gl.GenBuffers(1, &chunk.VBO)
+	gl.GenBuffers(1, &chunk.EBO)
+	chunk.UpdateBuffers()
+}
+
+func (chunk *Chunk) UpdateBuffers() {
+	gl.BindVertexArray(chunk.VAO)
+
+	vertices, indices := chunk.generateMeshData()
+	chunk.Vertices = vertices
+	chunk.Indices = indices
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, chunk.VBO)
+	gl.BufferData(gl.ARRAY_BUFFER, len(chunk.Vertices)*4, gl.Ptr(chunk.Vertices), gl.STATIC_DRAW)
+
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, chunk.EBO)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(chunk.Indices)*4, gl.Ptr(chunk.Indices), gl.STATIC_DRAW)
+
+	// Set up vertex attributes
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 7*4, gl.PtrOffset(0))
+	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 7*4, gl.PtrOffset(3*4))
+	gl.EnableVertexAttribArray(1)
+
+	gl.BindVertexArray(0)
+
+}
+
+func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
+	var vertices []float32
+	var indices []uint32
+	indexOffset := uint32(0)
+
+	for x := 0; x < 16; x++ {
+		for y := 0; y < 16; y++ {
+			for z := 0; z < 16; z++ {
+				block := chunk.At(x, y, z)
+				if block != nil {
+					for direction := 0; direction < 6; direction++ {
+						faceVertices, faceIndices := block.getFaceVerticesAndIndices(x, y, z, direction, indexOffset)
+						vertices = append(vertices, faceVertices...)
+						indices = append(indices, faceIndices...)
+						indexOffset += 4
+					}
+				}
+			}
 		}
 	}
+	return vertices, indices
 }
 
-func NewChunk(x, z int) *Chunk {
-	chunk := &Chunk{
-		position: [2]int{x, z},
-	}
-	for i := 0; i < 16; i++ {
-		for j := 0; j < 16; j++ {
-			for k := -WORLD_HEIGHT; k < WORLD_HEIGHT; k++ {
-				x := float32(i) + float32(x)*16
-				y := float32(k)
-				z := float32(j) + float32(z)*16
+func (chunk *Chunk) Render() {
+	gl.BindVertexArray(chunk.VAO)
+	gl.DrawElements(gl.TRIANGLES, int32(len(chunk.Indices)), gl.UNSIGNED_INT, gl.PtrOffset(0))
+	gl.BindVertexArray(0)
+}
 
-				block := NewBlock("dirt", [3]float32{x, y, z})
-				chunk.blocks = append(chunk.blocks, block)
+func NewChunk(chunkX, chunkZ, size int) *Chunk {
+	chunk := &Chunk{
+		Position: [2]int{chunkX, chunkZ},
+		Blocks:   make(map[[3]int]*Block),
+	}
+	color := randomColor()
+	for x := 0; x < size; x++ {
+		for z := 0; z < size; z++ {
+			for y := -WORLD_HEIGHT; y < WORLD_HEIGHT; y++ {
+				block := &Block{
+					Color: &color,
+				}
+				chunk.Blocks[[3]int{x, y, z}] = block
 			}
 		}
 	}
 
-	// chunk.blocks = append(chunk.blocks, NewBlock("dirt", [3]float32{0, 0, -1}))
 	return chunk
+}
+
+func (c *Chunk) At(x, y, z int) *Block {
+	return c.Blocks[[3]int{x, y, z}]
+}
+
+func (c *Chunk) GetModelMatrix() minemath.Mat4 {
+	return minemath.GetTranslationMatrix(c.Position[0]*16, 0, c.Position[1]*16)
+}
+
+func randomColor() Color {
+	return Color{
+		R: rand.IntN(255),
+		G: rand.IntN(255),
+		B: rand.IntN(255),
+	}
 }

@@ -1,8 +1,11 @@
-package engine
+package main
 
-import "github.com/go-gl/glfw/v3.3/glfw"
+import (
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/wmattei/minceraft/pkg/engine"
+)
 
-func SetupControls(window *glfw.Window, camera Camera) {
+func SetupControls(window *glfw.Window, camera *engine.PerspectiveCamera) {
 	var lastX, lastY float64
 	var firstMouse bool = true
 
@@ -31,7 +34,7 @@ func SetupControls(window *glfw.Window, camera Camera) {
 	window.SetCursorPosCallback(mouseCallback)
 }
 
-func HandleInput(window *glfw.Window, camera Camera) {
+func HandleInput(window *glfw.Window, camera *engine.PerspectiveCamera) {
 	if window.GetKey(glfw.KeyW) == glfw.Press {
 		camera.ProcessKeyboard("FORWARD")
 	}

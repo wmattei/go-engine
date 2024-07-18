@@ -53,3 +53,21 @@ func GetPerspectiveProjectionMatrix(fov, aspect, near, far float32) Mat4 {
 		{0, 0, (2 * far * near) * nf, 0},
 	}
 }
+
+func GetIdentityMatrix() Mat4 {
+	return Mat4{
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1},
+	}
+}
+
+func GetTranslationMatrix(x, y, z int) Mat4 {
+	return Mat4{
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{float32(x), float32(y), float32(z), 1},
+	}
+}

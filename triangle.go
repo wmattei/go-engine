@@ -1,4 +1,4 @@
-package engine
+package main
 
 import minemath "github.com/wmattei/minceraft/math"
 
