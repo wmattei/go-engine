@@ -40,7 +40,7 @@ func NewBlock(x, y, z float32, color *Color) *Block {
 
 func (b *Block) Update(w *Chunk) {}
 
-func (b *Block) CullFaces(w *Chunk) {
+func (b *Block) CullFaces(c *Chunk) {
 	position := b.Position
 	neighbors := [6][3]float32{
 		{position.X() + 1, position.Y(), position.Z()}, // right
@@ -51,7 +51,23 @@ func (b *Block) CullFaces(w *Chunk) {
 		{position.X(), position.Y(), position.Z() - 1}, // back
 	}
 	for i, n := range neighbors {
-		b.Faces[i].Visible = w.At(int(n[0]), int(n[1]), int(n[2])) == nil
+		b.Faces[i].Visible = c.At(int(n[0]), int(n[1]), int(n[2])) == nil
+	}
+
+	if position.X() == 15 && c.HasRightNeighbors() {
+		b.Faces[Right].Visible = false
+	}
+
+	if position.X() == 0 && c.HasLeftNeighbors() {
+		b.Faces[Left].Visible = false
+	}
+
+	if position.Z() == 15 && c.HasFrontNeighbors() {
+		b.Faces[Front].Visible = false
+	}
+
+	if position.Z() == 0 && c.HasBackNeighbors() {
+		b.Faces[Back].Visible = false
 	}
 }
 

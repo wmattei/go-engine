@@ -18,6 +18,24 @@ type Chunk struct {
 	EBO      uint32
 	Vertices []float32
 	Indices  []uint32
+
+	World *World
+}
+
+func (c *Chunk) HasRightNeighbors() bool {
+	return c.World.chunks[[2]int{c.Position[0] + 1, c.Position[1]}] != nil
+}
+
+func (c *Chunk) HasLeftNeighbors() bool {
+	return c.World.chunks[[2]int{c.Position[0] - 1, c.Position[1]}] != nil
+}
+
+func (c *Chunk) HasFrontNeighbors() bool {
+	return c.World.chunks[[2]int{c.Position[0], c.Position[1] + 1}] != nil
+}
+
+func (c *Chunk) HasBackNeighbors() bool {
+	return c.World.chunks[[2]int{c.Position[0], c.Position[1] - 1}] != nil
 }
 
 func (c *Chunk) Update() {

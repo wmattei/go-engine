@@ -43,9 +43,13 @@ func NewWorld(size int) *World {
 	for x := -size; x < size; x++ {
 		for z := -size; z < size; z++ {
 			chunk := NewChunk(x, z, 16)
-			chunk.Initialize()
+			chunk.World = world
 			world.chunks[[2]int{x, z}] = chunk
 		}
+	}
+
+	for _, chunk := range world.chunks {
+		chunk.Initialize()
 	}
 
 	return world

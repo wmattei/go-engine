@@ -18,10 +18,11 @@ func main() {
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	world := NewSingleChunkWorld()
+	world := NewWorld(1)
+	// world := NewSingleChunkWorld()
 	// world := NewSingleBlockWorld()
 	cam := engine.NewPerspectiveCamera(
-		[3]float32{0, 40, 0},
+		[3]float32{0, 43, 0},
 		[3]float32{0, 1, 0},
 		0,
 		0,
