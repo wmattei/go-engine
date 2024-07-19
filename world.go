@@ -22,6 +22,19 @@ func NewSingleBlockWorld() *World {
 	return world
 }
 
+func NewSingleChunkWorld() *World {
+	world := &World{
+		chunks: make(map[[2]int]*Chunk),
+	}
+
+	chunk := NewChunk(0, 0, 16)
+	chunk.Initialize()
+	world.chunks[[2]int{0, 0}] = chunk
+
+	return world
+
+}
+
 func NewWorld(size int) *World {
 	world := &World{
 		chunks: make(map[[2]int]*Chunk),

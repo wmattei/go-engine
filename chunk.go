@@ -7,7 +7,7 @@ import (
 	minemath "github.com/wmattei/minceraft/math"
 )
 
-const WORLD_HEIGHT = 64
+const WORLD_HEIGHT = 40
 
 type Chunk struct {
 	Blocks   map[[3]int]*Block
@@ -62,12 +62,16 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 	indexOffset := uint32(0)
 
 	for x := 0; x < 16; x++ {
-		for y := 0; y < 16; y++ {
+		for y := 0; y < WORLD_HEIGHT; y++ {
 			for z := 0; z < 16; z++ {
 				block := chunk.At(x, y, z)
 				if block != nil {
-					for direction := 0; direction < 6; direction++ {
-						faceVertices, faceIndices := block.getFaceVerticesAndIndices(x, y, z, direction, indexOffset)
+					block.CullFaces(chunk)
+					for direction, face := range block.Faces {
+						if !face.Visible {
+							continue
+						}
+						faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, direction, indexOffset)
 						vertices = append(vertices, faceVertices...)
 						indices = append(indices, faceIndices...)
 						indexOffset += 4
@@ -90,13 +94,11 @@ func NewChunk(chunkX, chunkZ, size int) *Chunk {
 		Position: [2]int{chunkX, chunkZ},
 		Blocks:   make(map[[3]int]*Block),
 	}
-	color := randomColor()
 	for x := 0; x < size; x++ {
 		for z := 0; z < size; z++ {
-			for y := -WORLD_HEIGHT; y < WORLD_HEIGHT; y++ {
-				block := &Block{
-					Color: &color,
-				}
+			for y := 0; y < WORLD_HEIGHT; y++ {
+				color := randomColor()
+				block := NewBlock(float32(x), float32(y), float32(z), &color)
 				chunk.Blocks[[3]int{x, y, z}] = block
 			}
 		}

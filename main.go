@@ -10,49 +10,30 @@ import (
 )
 
 const RENDER_DISTANCE = 1
-
-type Minceraft struct {
-	chunks []*Chunk
-	camera *engine.PerspectiveCamera
-}
-
-func (m *Minceraft) Update(dt float32) {
-	for _, chunk := range m.chunks {
-		chunk.Update()
-	}
-}
-
-func (m *Minceraft) Render() {
-	for _, chunk := range m.chunks {
-		chunk.Render()
-	}
-}
-
-func (m *Minceraft) GetScreenSize() (int, int) {
-	return 1200, 980
-}
+const WIDTH = 1200
+const HEIGHT = 780
 
 func main() {
-	window := engine.InitializeWindow(1200, 980)
+	window := engine.InitializeWindow(WIDTH, HEIGHT)
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	modelLoc := gl.GetUniformLocation(program, gl.Str("model\x00"))
-	viewLoc := gl.GetUniformLocation(program, gl.Str("view\x00"))
-	projLoc := gl.GetUniformLocation(program, gl.Str("projection\x00"))
-
+	world := NewSingleChunkWorld()
 	// world := NewSingleBlockWorld()
-	world := NewWorld(2)
 	cam := engine.NewPerspectiveCamera(
-		[3]float32{0, 68, 0},
+		[3]float32{0, 40, 0},
 		[3]float32{0, 1, 0},
 		0,
 		0,
 		90,
-		1200.0/980.0,
+		WIDTH/HEIGHT,
 		0.1,
 		1000.0,
 	)
+
+	modelLoc := gl.GetUniformLocation(program, gl.Str("model\x00"))
+	viewLoc := gl.GetUniformLocation(program, gl.Str("view\x00"))
+	projLoc := gl.GetUniformLocation(program, gl.Str("projection\x00"))
 
 	SetupControls(window, cam)
 
@@ -90,7 +71,6 @@ func main() {
 			model := chunk.GetModelMatrix()
 			flattenModel := model.Flatten()
 
-			// Bind the shader program and set the uniforms
 			gl.UseProgram(program)
 			gl.UniformMatrix4fv(modelLoc, 1, false, &flattenModel[0])
 			gl.UniformMatrix4fv(viewLoc, 1, false, &viewFlatten[0])

@@ -1,13 +1,18 @@
 package main
 
+import (
+	minemath "github.com/wmattei/minceraft/math"
+)
+
 type Face struct {
 	Visible bool
-	Mesh    *Mesh
+	Color   *Color
 }
 
 type Block struct {
-	Faces [6]*Face
-	Color *Color
+	Faces    [6]*Face
+	Color    *Color
+	Position *minemath.Vec3
 }
 
 const (
@@ -19,25 +24,42 @@ const (
 	Back
 )
 
-func (b *Block) Update(w *Chunk) {
-	// position := b.Position
-	// neighbors := [6][3]float32{
-	// 	{position.X() + 1, position.Y(), position.Z()}, // right
-	// 	{position.X() - 1, position.Y(), position.Z()}, // left
-	// 	{position.X(), position.Y() + 1, position.Z()}, // top
-	// 	{position.X(), position.Y() - 1, position.Z()}, // bottom
-	// 	{position.X(), position.Y(), position.Z() + 1}, // front
-	// 	{position.X(), position.Y(), position.Z() - 1}, // back
-	// }
-	// for i, n := range neighbors {
-	// 	b.Faces[i].Visible = w.At(int(n[0]), int(n[1]), int(n[2])) != nil
-	// }
+func NewBlock(x, y, z float32, color *Color) *Block {
+	return &Block{
+		Position: &minemath.Vec3{x, y, z},
+		Faces: [6]*Face{
+			{Color: color, Visible: true},
+			{Color: color, Visible: true},
+			{Color: color, Visible: true},
+			{Color: color, Visible: true},
+			{Color: color, Visible: true},
+			{Color: color, Visible: true},
+		},
+	}
 }
-func (b *Block) getFaceVerticesAndIndices(x, y, z int, direction int, indexOffset uint32) ([]float32, []uint32) {
+
+func (b *Block) Update(w *Chunk) {}
+
+func (b *Block) CullFaces(w *Chunk) {
+	position := b.Position
+	neighbors := [6][3]float32{
+		{position.X() + 1, position.Y(), position.Z()}, // right
+		{position.X() - 1, position.Y(), position.Z()}, // left
+		{position.X(), position.Y() + 1, position.Z()}, // top
+		{position.X(), position.Y() - 1, position.Z()}, // bottom
+		{position.X(), position.Y(), position.Z() + 1}, // front
+		{position.X(), position.Y(), position.Z() - 1}, // back
+	}
+	for i, n := range neighbors {
+		b.Faces[i].Visible = w.At(int(n[0]), int(n[1]), int(n[2])) == nil
+	}
+}
+
+func (f *Face) GetVerticesAndIndices(x, y, z int, direction int, indexOffset uint32) ([]float32, []uint32) {
 	var faceVertices []float32
 	var faceIndices []uint32
 
-	color := b.Color.ToVec4()
+	color := f.Color.ToVec4()
 
 	switch direction {
 	case Right:
