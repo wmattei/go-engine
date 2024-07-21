@@ -11,13 +11,14 @@ func (w *World) Update() {
 }
 
 func NewSingleBlockWorld() *World {
-	chunk := NewChunk(0, 0, 1)
-	chunk.Initialize()
 	world := &World{
-		chunks: map[[2]int]*Chunk{
-			{0, 0}: chunk,
-		},
+		chunks: map[[2]int]*Chunk{},
 	}
+	chunk := NewChunk(0, 0, 1)
+	chunk.World = world
+	chunk.Initialize()
+
+	world.chunks[[2]int{0, 0}] = chunk
 
 	return world
 }
@@ -28,6 +29,7 @@ func NewSingleChunkWorld() *World {
 	}
 
 	chunk := NewChunk(0, 0, 16)
+	chunk.World = world
 	chunk.Initialize()
 	world.chunks[[2]int{0, 0}] = chunk
 

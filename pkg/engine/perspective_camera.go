@@ -6,12 +6,9 @@ import (
 	minemath "github.com/wmattei/minceraft/math"
 )
 
-// PerspectiveCamera represents a camera with perspective projection.
 type PerspectiveCamera struct {
 	Position minemath.Vec3
 	front    minemath.Vec3
-	up       minemath.Vec3
-	right    minemath.Vec3
 	worldUp  minemath.Vec3
 
 	yaw   float32
@@ -41,7 +38,7 @@ func NewPerspectiveCamera(position, up minemath.Vec3, yaw, pitch, fov, aspect, n
 }
 
 func (cam *PerspectiveCamera) GetViewMatrix() minemath.Mat4 {
-	return minemath.LookAt(cam.Position, minemath.Add(cam.Position, cam.front), cam.up)
+	return minemath.LookAt(cam.Position, minemath.Add(cam.Position, cam.front), cam.worldUp)
 }
 
 func (cam *PerspectiveCamera) GetProjectionMatrix() minemath.Mat4 {
@@ -71,14 +68,12 @@ func (cam *PerspectiveCamera) Rotate(pitch, yaw float32) {
 
 func (cam *PerspectiveCamera) updateCameraVectors() {
 	front := minemath.Vec3{
-		float32(math.Cos(float64(cam.pitch)*math.Pi/180.0) * math.Sin(float64(cam.yaw)*math.Pi/180.0)),
-		float32(math.Sin(float64(cam.pitch) * math.Pi / 180.0)),
-		-float32(math.Cos(float64(cam.pitch)*math.Pi/180.0) * math.Cos(float64(cam.yaw)*math.Pi/180.0)),
+		float32(math.Cos(float64(minemath.DegreesToRadians(cam.pitch))) * math.Cos(float64(minemath.DegreesToRadians(cam.yaw)))),
+		float32(math.Sin(float64(minemath.DegreesToRadians((cam.pitch))))),
+		float32(math.Cos(float64(minemath.DegreesToRadians(cam.pitch))) * math.Sin(float64(minemath.DegreesToRadians(cam.yaw)))),
 	}
-	cam.front = minemath.Normalize(front)
 
-	cam.right = minemath.Normalize(minemath.Cross(cam.front, cam.worldUp))
-	cam.up = minemath.Normalize(minemath.Cross(cam.right, cam.front))
+	cam.front = front
 }
 
 func (cam *PerspectiveCamera) ProcessKeyboard(direction string) {
@@ -98,16 +93,18 @@ func (cam *PerspectiveCamera) ProcessKeyboard(direction string) {
 		cam.Position[2] -= backward.Z() * velocity
 
 	case "LEFT":
-		left := minemath.Vec3{cam.right.X(), 0, cam.right.Z()}
+		right := minemath.Normalize(minemath.Cross(cam.front, cam.worldUp))
+		left := minemath.Vec3{right.X(), 0, right.Z()}
 		left = minemath.Normalize(left)
 		cam.Position[0] -= left.X() * velocity
 		cam.Position[2] -= left.Z() * velocity
 
 	case "RIGHT":
-		right := minemath.Vec3{cam.right.X(), 0, cam.right.Z()}
-		right = minemath.Normalize(right)
-		cam.Position[0] += right.X() * velocity
-		cam.Position[2] += right.Z() * velocity
+		right := minemath.Normalize(minemath.Cross(cam.front, cam.worldUp))
+		newRight := minemath.Vec3{right.X(), 0, right.Z()}
+		newRight = minemath.Normalize(newRight)
+		cam.Position[0] += newRight.X() * velocity
+		cam.Position[2] += newRight.Z() * velocity
 
 	case "UP":
 		cam.Position[1] += velocity

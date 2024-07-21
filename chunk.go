@@ -5,9 +5,10 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	minemath "github.com/wmattei/minceraft/math"
+	"github.com/wmattei/minceraft/pkg/engine"
 )
 
-const WORLD_HEIGHT = 40
+const WORLD_HEIGHT = 41
 
 type Chunk struct {
 	Blocks   map[[3]int]*Block
@@ -23,18 +24,30 @@ type Chunk struct {
 }
 
 func (c *Chunk) HasRightNeighbors() bool {
+	if len(c.World.chunks) <= 1 {
+		return false
+	}
 	return c.World.chunks[[2]int{c.Position[0] + 1, c.Position[1]}] != nil
 }
 
 func (c *Chunk) HasLeftNeighbors() bool {
+	if len(c.World.chunks) <= 1 {
+		return false
+	}
 	return c.World.chunks[[2]int{c.Position[0] - 1, c.Position[1]}] != nil
 }
 
 func (c *Chunk) HasFrontNeighbors() bool {
+	if len(c.World.chunks) <= 1 {
+		return false
+	}
 	return c.World.chunks[[2]int{c.Position[0], c.Position[1] + 1}] != nil
 }
 
 func (c *Chunk) HasBackNeighbors() bool {
+	if len(c.World.chunks) <= 1 {
+		return false
+	}
 	return c.World.chunks[[2]int{c.Position[0], c.Position[1] - 1}] != nil
 }
 
@@ -112,10 +125,10 @@ func NewChunk(chunkX, chunkZ, size int) *Chunk {
 		Position: [2]int{chunkX, chunkZ},
 		Blocks:   make(map[[3]int]*Block),
 	}
+	color := randomColor()
 	for x := 0; x < size; x++ {
 		for z := 0; z < size; z++ {
 			for y := 0; y < WORLD_HEIGHT; y++ {
-				color := randomColor()
 				block := NewBlock(float32(x), float32(y), float32(z), &color)
 				chunk.Blocks[[3]int{x, y, z}] = block
 			}
@@ -130,7 +143,8 @@ func (c *Chunk) At(x, y, z int) *Block {
 }
 
 func (c *Chunk) GetModelMatrix() minemath.Mat4 {
-	return minemath.GetTranslationMatrix(c.Position[0]*16, 0, c.Position[1]*16)
+	return minemath.GetTranslationMatrix(float32(c.Position[0]*16), 0, float32(c.Position[1]*16))
+	// return minemath.GetTranslationMatrix(float32(c.Position[0]*16), 0, float32(c.Position[1]*16))
 }
 
 func randomColor() Color {
@@ -139,4 +153,43 @@ func randomColor() Color {
 		G: rand.IntN(255),
 		B: rand.IntN(255),
 	}
+}
+
+func (c Chunk) isInFrustum(frustum *engine.Frustum, viewMatrix minemath.Mat4) bool {
+	chunkSize := float32(16)
+	chunkHeight := float32(WORLD_HEIGHT)
+
+	corners := [8]minemath.Vec3{
+		{float32(c.Position[0]), 0, float32(c.Position[1])},
+		{float32(c.Position[0]) + chunkSize, 0, float32(c.Position[1])},
+		{float32(c.Position[0]), chunkHeight, float32(c.Position[1])},
+		{float32(c.Position[0]) + chunkSize, chunkHeight, float32(c.Position[1])},
+		{float32(c.Position[0]), 0, float32(c.Position[1]) + chunkSize},
+		{float32(c.Position[0]) + chunkSize, 0, float32(c.Position[1]) + chunkSize},
+		{float32(c.Position[0]), chunkHeight, float32(c.Position[1]) + chunkSize},
+		{float32(c.Position[0]) + chunkSize, chunkHeight, float32(c.Position[1]) + chunkSize},
+	}
+
+	for i := 0; i < 8; i++ {
+		corners[i] = minemath.TransformVec3(viewMatrix, corners[i])
+	}
+
+	planes := frustum.GetPlanes()
+
+	for i := 0; i < 6; i++ {
+		plane := planes[i]
+		outside := true
+		for j := 0; j < 8; j++ {
+			dist := plane.Normal[0]*corners[j].X() + plane.Normal[1]*corners[j].Y() + plane.Normal[2]*corners[j].Z() + plane.Distance
+			if dist >= 0 {
+				outside = false
+				break
+			}
+		}
+		if outside {
+			return false
+		}
+	}
+	return true
+
 }

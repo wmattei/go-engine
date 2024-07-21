@@ -1,29 +1,21 @@
 package minemath
 
-import (
-	"math"
-)
-
 func LookAt(eye, center, up Vec3) Mat4 {
-	f := Normalize(Subtract(center, eye))
-	s := Normalize(Cross(f, up))
-	u := Cross(s, f)
+	zaxis := Normalize(Subtract(eye, center)) // The forward vector
+	xaxis := Normalize(Cross(up, zaxis))      // The right vector
+	yaxis := Cross(zaxis, xaxis)              // The up vector
 
 	return Mat4{
-		{s.X(), u.X(), -f.X(), 0},
-		{s.Y(), u.Y(), -f.Y(), 0},
-		{s.Z(), u.Z(), -f.Z(), 0},
-		{-Dot(s, eye), -Dot(u, eye), Dot(f, eye), 1},
+		{xaxis[0], xaxis[1], xaxis[2], -Dot(xaxis, eye)},
+		{yaxis[0], yaxis[1], yaxis[2], -Dot(yaxis, eye)},
+		{zaxis[0], zaxis[1], zaxis[2], -Dot(zaxis, eye)},
+		{0, 0, 0, 1},
 	}
 }
 
 func Normalize(v Vec3) Vec3 {
-	length := float32(math.Sqrt(float64(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])))
-	if length == 0 {
-		return Vec3{0, 0, 0}
-	}
-	return Vec3{v[0] / length, v[1] / length, v[2] / length}
-
+	length := v.Len()
+	return Vec3{v.X() / length, v.Y() / length, v.Z() / length}
 }
 
 func Subtract(a, b Vec3) Vec3 {

@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	minemath "github.com/wmattei/minceraft/math"
 	"github.com/wmattei/minceraft/pkg/engine"
 )
 
@@ -18,19 +20,21 @@ func main() {
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	world := NewWorld(1)
+	world := NewWorld(10)
 	// world := NewSingleChunkWorld()
 	// world := NewSingleBlockWorld()
 	cam := engine.NewPerspectiveCamera(
-		[3]float32{0, 43, 0},
+		[3]float32{10, 43, 0},
 		[3]float32{0, 1, 0},
 		0,
 		0,
-		90,
-		WIDTH/HEIGHT,
-		0.1,
-		1000.0,
+		math.Pi/2,
+		float32(WIDTH)/float32(HEIGHT),
+		0.01,
+		1000,
 	)
+
+	frustum := engine.NewFrustum(cam)
 
 	modelLoc := gl.GetUniformLocation(program, gl.Str("model\x00"))
 	viewLoc := gl.GetUniformLocation(program, gl.Str("view\x00"))
@@ -68,8 +72,14 @@ func main() {
 		projection := cam.GetProjectionMatrix()
 		projectionFlatten := projection.Flatten()
 
+		frustum.UpdateFrustum(minemath.MultiplyMatrices(projection, view))
+
 		for _, chunk := range world.chunks {
 			model := chunk.GetModelMatrix()
+			if !chunk.isInFrustum(frustum, model) {
+				continue
+			}
+
 			flattenModel := model.Flatten()
 
 			gl.UseProgram(program)

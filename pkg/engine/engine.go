@@ -38,8 +38,8 @@ func InitializeWindow(width, height int) *glfw.Window {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 
-	gl.Enable(gl.DEBUG_OUTPUT)
-	gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
+	// gl.Enable(gl.DEBUG_OUTPUT)
+	// gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
 
 	return window
 }
