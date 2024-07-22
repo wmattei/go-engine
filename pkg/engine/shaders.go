@@ -14,27 +14,48 @@ var SIMPLE_FRAGMENT_SHADER Shader
 const simpleVertexShdr = `
     #version 410 core
 
-	layout(location = 0) in vec3 inPosition;
-	layout(location = 1) in vec4 inColor;
+    layout(location = 0) in vec3 inPosition;
+    layout(location = 1) in vec4 inColor;
+    layout(location = 2) in vec2 inTexCoord;
+    layout(location = 3) in float inTexIndex;
 
-	uniform mat4 model;
-	uniform mat4 view;
-	uniform mat4 projection;
+    uniform mat4 model;
+    uniform mat4 view;
+    uniform mat4 projection;
 
-	out vec4 color;
+    out vec4 color;
+    out vec2 texCoord;
+    out float texIndex;
 
-	void main() {
-		color = inColor;
-		gl_Position = projection * view * model * vec4(inPosition, 1.0);
-	}
+    void main() {
+        color = inColor;
+        texCoord = inTexCoord;
+        texIndex = inTexIndex;
+        gl_Position = projection * view * model * vec4(inPosition, 1.0);
+    }
 ` + "\x00"
 
 const simpleFragmentShdr = `
     #version 410
-    in vec4 color;  // Color passed from vertex shader
+
+    in vec4 color;
+    in vec2 texCoord;
+    in float texIndex;
+
     out vec4 frag_color;
+
+    uniform sampler2D textures[6]; // Adjust size as needed
+
     void main() {
-        frag_color = color;
+        int idx = int(texIndex);
+        vec4 texColor = texture(textures[idx], texCoord);
+        
+        // If color alpha is 0.0, just use the texture color; otherwise, multiply by color
+        if (color.a == 0.0) {
+            frag_color = texColor;
+        } else {
+            frag_color = texColor * color;
+        }
     }
 ` + "\x00"
 

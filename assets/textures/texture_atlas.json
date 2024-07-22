@@ -1,0 +1,11 @@
+{
+  "grass": {
+    "top": {
+      "path": "assets/textures/block/grass_block_top.png",
+      "color": "0,255,0"
+    },
+    "side": {
+      "path": "assets/textures/block/grass_block_side.png"
+    }
+  }
+}

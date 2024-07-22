@@ -1,8 +1,6 @@
 package main
 
 import (
-	"math/rand/v2"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
 	minemath "github.com/wmattei/minceraft/math"
 	"github.com/wmattei/minceraft/pkg/engine"
@@ -77,11 +75,14 @@ func (chunk *Chunk) UpdateBuffers() {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, chunk.EBO)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(chunk.Indices)*4, gl.Ptr(chunk.Indices), gl.STATIC_DRAW)
 
-	// Set up vertex attributes
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 7*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 11*4, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 7*4, gl.PtrOffset(3*4))
+	gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 11*4, gl.PtrOffset(3*4))
 	gl.EnableVertexAttribArray(1)
+	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 11*4, gl.PtrOffset(8*4))
+	gl.EnableVertexAttribArray(2)
+	gl.VertexAttribPointer(3, 1, gl.FLOAT, false, 11*4, gl.PtrOffset(10*4))
+	gl.EnableVertexAttribArray(3)
 
 	gl.BindVertexArray(0)
 
@@ -102,7 +103,7 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 						if !face.Visible {
 							continue
 						}
-						faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, direction, indexOffset)
+						faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset)
 						vertices = append(vertices, faceVertices...)
 						indices = append(indices, faceIndices...)
 						indexOffset += 4
@@ -120,16 +121,16 @@ func (chunk *Chunk) Render() {
 	gl.BindVertexArray(0)
 }
 
-func NewChunk(chunkX, chunkZ, size int) *Chunk {
+func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 	chunk := &Chunk{
 		Position: [2]int{chunkX, chunkZ},
 		Blocks:   make(map[[3]int]*Block),
 	}
-	color := randomColor()
+
 	for x := 0; x < size; x++ {
 		for z := 0; z < size; z++ {
 			for y := 0; y < WORLD_HEIGHT; y++ {
-				block := NewBlock(float32(x), float32(y), float32(z), &color)
+				block := world.NewBlock(float32(x), float32(y), float32(z), Grass)
 				chunk.Blocks[[3]int{x, y, z}] = block
 			}
 		}
@@ -145,14 +146,6 @@ func (c *Chunk) At(x, y, z int) *Block {
 func (c *Chunk) GetModelMatrix() minemath.Mat4 {
 	return minemath.GetTranslationMatrix(float32(c.Position[0]*16), 0, float32(c.Position[1]*16))
 	// return minemath.GetTranslationMatrix(float32(c.Position[0]*16), 0, float32(c.Position[1]*16))
-}
-
-func randomColor() Color {
-	return Color{
-		R: rand.IntN(255),
-		G: rand.IntN(255),
-		B: rand.IntN(255),
-	}
 }
 
 func (c Chunk) isInFrustum(frustum *engine.Frustum, viewMatrix minemath.Mat4) bool {
@@ -180,8 +173,7 @@ func (c Chunk) isInFrustum(frustum *engine.Frustum, viewMatrix minemath.Mat4) bo
 		plane := planes[i]
 		outside := true
 		for j := 0; j < 8; j++ {
-			dist := plane.Normal[0]*corners[j].X() + plane.Normal[1]*corners[j].Y() + plane.Normal[2]*corners[j].Z() + plane.Distance
-			if dist >= 0 {
+			if plane.DistanceToPoint(corners[j]) >= 0 {
 				outside = false
 				break
 			}
