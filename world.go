@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
 	minemath "github.com/wmattei/minceraft/math"
 	"github.com/wmattei/minceraft/pkg/engine"
@@ -13,12 +10,15 @@ type World struct {
 	chunks   map[[2]int]*Chunk
 	textures map[string]Texture
 	noise    *Noise
+
+	light *Light
 }
 
 func (w *World) Update() {
-	for _, chunk := range w.chunks {
-		chunk.Update()
-	}
+	w.light.Move()
+	// for _, chunk := range w.chunks {
+	// 	chunk.Update()
+	// }
 }
 
 func (w *World) LoadTextures() {
@@ -79,15 +79,16 @@ func NewSingleChunkWorld() *World {
 }
 
 func NewWorld(size int) *World {
-	startedAt := time.Now()
-	defer func() {
-		elapsed := time.Since(startedAt)
-		fmt.Println(elapsed.Milliseconds())
-	}()
+	// startedAt := time.Now()
+	// defer func() {
+	// 	elapsed := time.Since(startedAt)
+	// 	fmt.Println(elapsed.Milliseconds())
+	// }()
 	world := &World{
 		chunks:   make(map[[2]int]*Chunk),
 		textures: map[string]Texture{},
 		noise:    &Noise{},
+		light:    &Light{Direction: &minemath.Vec3{0.9, 1, 0.5}},
 	}
 
 	world.LoadTextures()
@@ -115,12 +116,12 @@ func (w *World) NewBlock(x, y, z float32, blockType BlockType) *Block {
 		Type:     blockType,
 		Position: &minemath.Vec3{x, y, z},
 		Faces: [6]*Face{
-			{Texture: &side, Visible: true},
-			{Texture: &side, Visible: true},
-			{Texture: &top, Visible: true},
-			{Texture: &side, Visible: true},
-			{Texture: &side, Visible: true},
-			{Texture: &side, Visible: true},
+			{Texture: &side, Visible: true, Normal: &normalRight},
+			{Texture: &side, Visible: true, Normal: &normalLeft},
+			{Texture: &top, Visible: true, Normal: &normalTop},
+			{Texture: &side, Visible: true, Normal: &normalBottom},
+			{Texture: &side, Visible: true, Normal: &normalFront},
+			{Texture: &side, Visible: true, Normal: &normalBack},
 		},
 	}
 }

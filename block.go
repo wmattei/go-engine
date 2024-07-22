@@ -4,9 +4,19 @@ import (
 	minemath "github.com/wmattei/minceraft/math"
 )
 
+var (
+	normalRight  = minemath.Vec3{1, 0, 0}
+	normalLeft   = minemath.Vec3{-1, 0, 0}
+	normalTop    = minemath.Vec3{0, 1, 0}
+	normalBottom = minemath.Vec3{0, -1, 0}
+	normalFront  = minemath.Vec3{0, 0, 1}
+	normalBack   = minemath.Vec3{0, 0, -1}
+)
+
 type Face struct {
 	Visible bool
 	Texture *Texture
+	Normal  *minemath.Vec3
 }
 
 type Block struct {
@@ -103,7 +113,7 @@ func (b *Block) CullFaces(c *Chunk) {
 
 }
 
-func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffset uint32) ([]float32, []uint32) {
+func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffset uint32, lightDir minemath.Vec3) ([]float32, []uint32) {
 	var faceVertices []float32
 	var faceIndices []uint32
 
@@ -117,7 +127,13 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 		alpha = 0.0
 	}
 
+	intensity := minemath.CalculateLightIntensity(*f.Normal, lightDir)
+
 	color := clr.ToVec4()
+
+	color[0] = color[0] * intensity
+	color[1] = color[1] * intensity
+	color[2] = color[2] * intensity
 
 	index := f.Texture.Index
 	// if direction == Back {
@@ -127,45 +143,45 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 	switch direction {
 	case Right:
 		faceVertices = []float32{
-			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
-			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
-			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
+			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index),
+			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index),
+			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index),
+			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index),
 		}
 	case Left:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
-			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
-			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
-			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
+			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index),
+			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index),
+			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index),
+			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index),
 		}
 	case Top:
 		faceVertices = []float32{
-			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-left
-			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-right
-			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Top-left
+			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index),
+			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index),
+			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index),
+			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index),
 		}
 	case Bottom:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-left
-			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Bottom-right
-			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-right
-			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Top-left
+			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index),
+			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index),
+			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index),
+			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index),
 		}
 	case Front:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
-			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
-			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
+			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index),
+			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index),
+			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index),
+			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index),
 		}
 	case Back:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
-			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
-			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
+			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index),
+			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index),
+			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index),
+			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index),
 		}
 	}
 

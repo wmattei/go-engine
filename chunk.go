@@ -100,6 +100,8 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 	var indices []uint32
 	indexOffset := uint32(0)
 
+	lightDirection := chunk.World.light.Direction
+
 	for x := 0; x < 16; x++ {
 		for y := 0; y < WORLD_HEIGHT; y++ {
 			for z := 0; z < 16; z++ {
@@ -107,11 +109,11 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 				// if x == 15 {
 				// 	continue
 				// }
-				if block.Type != Air {
+				if block != nil && block.Type != Air {
 					block.CullFaces(chunk)
 					for direction, face := range block.Faces {
 						if face.Visible {
-							faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset)
+							faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset, *lightDirection)
 							vertices = append(vertices, faceVertices...)
 							indices = append(indices, faceIndices...)
 							indexOffset += 4

@@ -5,6 +5,10 @@ import "math"
 type Vec3 [3]float32
 type Vec2 [2]float32
 
+func (v Vec3) Negate() Vec3 {
+	return Vec3{-v.X(), -v.Y(), -v.Z()}
+}
+
 func (v Vec3) Len() float32 {
 	return float32(math.Sqrt(float64(v.X()*v.X() + v.Y()*v.Y() + v.Z()*v.Z())))
 }
@@ -65,4 +69,12 @@ func MultiplyMatrices(a, b Mat4) Mat4 {
 		}
 	}
 	return result
+}
+
+func CalculateLightIntensity(normal, lightDir Vec3) float32 {
+	intensity := Dot(normal, lightDir)
+	if intensity < 0.4 {
+		intensity = 0.4
+	}
+	return intensity
 }

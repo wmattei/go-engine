@@ -30,7 +30,7 @@ func main() {
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	world := NewWorld(3)
+	world := NewWorld(10)
 
 	// return
 	// world := NewSingleChunkWorld()
