@@ -47,7 +47,8 @@ func (b *Block) CullFaces(c *Chunk) {
 		{position.X(), position.Y(), position.Z() - 1}, // back
 	}
 	for i, n := range neighbors {
-		b.Faces[i].Visible = c.At(int(n[0]), int(n[1]), int(n[2])) == nil
+		neighborBlock := c.At(int(n[0]), int(n[1]), int(n[2]))
+		b.Faces[i].Visible = neighborBlock == nil || neighborBlock.Type == Air
 	}
 
 	if position.X() == 15 && c.HasRightNeighbors() {

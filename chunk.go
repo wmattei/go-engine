@@ -6,7 +6,8 @@ import (
 	"github.com/wmattei/minceraft/pkg/engine"
 )
 
-const WORLD_HEIGHT = 41
+const WORLD_HEIGHT = 164
+const SEA_LEVEL = 64
 
 type Chunk struct {
 	Blocks   map[[3]int]*Block
@@ -25,6 +26,7 @@ func (c *Chunk) HasRightNeighbors() bool {
 	if len(c.World.chunks) <= 1 {
 		return false
 	}
+
 	return c.World.chunks[[2]int{c.Position[0] + 1, c.Position[1]}] != nil
 }
 
@@ -97,7 +99,7 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 		for y := 0; y < WORLD_HEIGHT; y++ {
 			for z := 0; z < 16; z++ {
 				block := chunk.At(x, y, z)
-				if block != nil {
+				if block.Type != Air {
 					block.CullFaces(chunk)
 					for direction, face := range block.Faces {
 						if !face.Visible {
@@ -130,7 +132,11 @@ func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 	for x := 0; x < size; x++ {
 		for z := 0; z < size; z++ {
 			for y := 0; y < WORLD_HEIGHT; y++ {
-				block := world.NewBlock(float32(x), float32(y), float32(z), Grass)
+				blockType := Air
+				if y <= SEA_LEVEL {
+					blockType = Grass
+				}
+				block := world.NewBlock(float32(x), float32(y), float32(z), blockType)
 				chunk.Blocks[[3]int{x, y, z}] = block
 			}
 		}

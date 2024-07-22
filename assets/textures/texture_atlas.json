@@ -6,6 +6,9 @@
     },
     "side": {
       "path": "assets/textures/block/grass_block_side.png"
+    },
+    "bottom": {
+      "path": "assets/textures/block/grass_block_side.png"
     }
   }
 }
