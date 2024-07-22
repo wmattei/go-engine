@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -16,11 +19,20 @@ const WIDTH = 1200
 const HEIGHT = 780
 
 func main() {
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
+
 	window := engine.InitializeWindow(WIDTH, HEIGHT)
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	world := NewWorld(1)
+	world := NewWorld(5)
+
+	// return
 	// world := NewSingleChunkWorld()
 	// world := NewSingleBlockWorld()
 
@@ -62,7 +74,7 @@ func main() {
 
 		HandleInput(window, cam)
 
-		world.Update()
+		// world.Update()
 
 		view := cam.GetViewMatrix()
 		viewFlatten := view.Flatten()

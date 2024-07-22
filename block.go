@@ -48,24 +48,56 @@ func (b *Block) CullFaces(c *Chunk) {
 	}
 	for i, n := range neighbors {
 		neighborBlock := c.At(int(n[0]), int(n[1]), int(n[2]))
-		b.Faces[i].Visible = neighborBlock == nil || neighborBlock.Type == Air
+		b.Faces[i].Visible = neighborBlock != nil && neighborBlock.Type == Air
 	}
 
-	if position.X() == 15 && c.HasRightNeighbors() {
-		b.Faces[Right].Visible = false
+	if position.X() == 15 {
+		if !c.HasRightNeighbors() {
+			b.Faces[Right].Visible = false
+		} else {
+			neighborBlock := c.GetBlock(int(position.X()-1), int(position.Y()), int(position.Z()))
+			if neighborBlock.IsSolid() {
+				b.Faces[Left].Visible = false
+			}
+
+		}
 	}
 
-	if position.X() == 0 && c.HasLeftNeighbors() {
-		b.Faces[Left].Visible = false
+	if position.X() == 0 {
+		if !c.HasLeftNeighbors() {
+			b.Faces[Left].Visible = false
+		} else {
+			neighborBlock := c.GetBlock(int(position.X()+1), int(position.Y()), int(position.Z()))
+			if neighborBlock.IsSolid() {
+				b.Faces[Left].Visible = false
+			}
+		}
 	}
 
-	if position.Z() == 15 && c.HasFrontNeighbors() {
-		b.Faces[Front].Visible = false
+	if position.Z() == 15 {
+		if !c.HasFrontNeighbors() {
+			b.Faces[Front].Visible = false
+		} else {
+			neighborBlock := c.GetBlock(int(position.X()), int(position.Y()), int(position.Z()-1))
+			if neighborBlock.IsSolid() {
+				b.Faces[Left].Visible = false
+			}
+
+		}
 	}
 
-	if position.Z() == 0 && c.HasBackNeighbors() {
-		b.Faces[Back].Visible = false
+	if position.Z() == 0 {
+		if !c.HasBackNeighbors() {
+			b.Faces[Back].Visible = false
+		} else {
+			neighborBlock := c.GetBlock(int(position.X()), int(position.Y()), int(position.Z()+1))
+			if neighborBlock.IsSolid() {
+				b.Faces[Back].Visible = false
+			}
+
+		}
 	}
+
 }
 
 func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffset uint32) ([]float32, []uint32) {
@@ -135,4 +167,8 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 	}
 
 	return faceVertices, faceIndices
+}
+
+func (b *Block) IsSolid() bool {
+	return b.Type != Air
 }

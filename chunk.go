@@ -22,6 +22,10 @@ type Chunk struct {
 	World *World
 }
 
+func (c *Chunk) GetBlock(x, y, z int) *Block {
+	return c.Blocks[[3]int{x, y, z}]
+}
+
 func (c *Chunk) HasRightNeighbors() bool {
 	if len(c.World.chunks) <= 1 {
 		return false
@@ -58,6 +62,7 @@ func (c *Chunk) Update() {
 }
 
 func (chunk *Chunk) Initialize() {
+
 	gl.GenVertexArrays(1, &chunk.VAO)
 	gl.GenBuffers(1, &chunk.VBO)
 	gl.GenBuffers(1, &chunk.EBO)
@@ -102,13 +107,12 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 				if block.Type != Air {
 					block.CullFaces(chunk)
 					for direction, face := range block.Faces {
-						if !face.Visible {
-							continue
+						if face.Visible {
+							faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset)
+							vertices = append(vertices, faceVertices...)
+							indices = append(indices, faceIndices...)
+							indexOffset += 4
 						}
-						faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset)
-						vertices = append(vertices, faceVertices...)
-						indices = append(indices, faceIndices...)
-						indexOffset += 4
 					}
 				}
 			}

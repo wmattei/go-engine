@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	minemath "github.com/wmattei/minceraft/math"
@@ -28,7 +30,7 @@ func (w *World) BindTextures(program uint32) {
 	for _, texture := range w.textures {
 		gl.ActiveTexture(gl.TEXTURE0 + uint32(texture.Index))
 		gl.BindTexture(gl.TEXTURE_2D, texture.ref)
-		uniformName := fmt.Sprintf("textures[%d]\x00", texture.Index)
+		uniformName := texture.UniformName
 		gl.Uniform1i(gl.GetUniformLocation(program, gl.Str(uniformName)), int32(texture.Index))
 	}
 }
@@ -53,11 +55,8 @@ func (w *World) Render(program uint32, frustum *engine.Frustum) {
 }
 
 func NewSingleBlockWorld() *World {
-	world := &World{
-		chunks:   map[[2]int]*Chunk{},
-		textures: map[string]Texture{},
-	}
-	world.LoadTextures()
+	world := NewWorld(0)
+
 	chunk := NewChunk(world, 0, 0, 1)
 	chunk.World = world
 	chunk.Initialize()
@@ -68,12 +67,7 @@ func NewSingleBlockWorld() *World {
 }
 
 func NewSingleChunkWorld() *World {
-	world := &World{
-		chunks:   make(map[[2]int]*Chunk),
-		textures: map[string]Texture{},
-	}
-
-	world.LoadTextures()
+	world := NewWorld(0)
 
 	chunk := NewChunk(world, 0, 0, 16)
 	chunk.World = world
@@ -85,6 +79,11 @@ func NewSingleChunkWorld() *World {
 }
 
 func NewWorld(size int) *World {
+	startedAt := time.Now()
+	defer func() {
+		elapsed := time.Since(startedAt)
+		fmt.Println(elapsed.Milliseconds())
+	}()
 	world := &World{
 		chunks:   make(map[[2]int]*Chunk),
 		textures: map[string]Texture{},
@@ -92,16 +91,31 @@ func NewWorld(size int) *World {
 
 	world.LoadTextures()
 
+	var wg sync.WaitGroup
+	chunkChannel := make(chan *Chunk, size*size*4) // Buffered channel to handle all chunks
+
+	createChunk := func(x, z int) {
+		defer wg.Done()
+		chunk := NewChunk(world, x, z, 16)
+		chunk.World = world
+		chunkChannel <- chunk
+	}
+
 	for x := -size; x < size; x++ {
 		for z := -size; z < size; z++ {
-			chunk := NewChunk(world, x, z, 16)
-			chunk.World = world
-			world.chunks[[2]int{x, z}] = chunk
+			wg.Add(1)
+			go createChunk(x, z)
 		}
 	}
 
-	for _, chunk := range world.chunks {
+	go func() {
+		wg.Wait()
+		close(chunkChannel)
+	}()
+
+	for chunk := range chunkChannel {
 		chunk.Initialize()
+		world.chunks[[2]int{chunk.Position[0], chunk.Position[1]}] = chunk
 	}
 
 	return world

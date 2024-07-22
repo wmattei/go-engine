@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -20,10 +21,11 @@ const (
 type Texture struct {
 	ref uint32
 
-	ColorStr string `json:"color"`
-	Color    *Color `json:"-"`
-	Path     string `json:"path"`
-	Index    int    `json:"-"`
+	ColorStr    string `json:"color"`
+	Color       *Color `json:"-"`
+	Path        string `json:"path"`
+	Index       int    `json:"-"`
+	UniformName string `json:"-"`
 }
 
 type TextureFile map[BlockType]map[TextureSide]Texture
@@ -61,8 +63,9 @@ func LoadTextures() map[string]Texture {
 			}
 			texture.ref = ref
 			texture.Index = index
-			result[texName] = texture
+			texture.UniformName = fmt.Sprintf("textures[%d]\x00", texture.Index)
 
+			result[texName] = texture
 			index++
 		}
 	}
