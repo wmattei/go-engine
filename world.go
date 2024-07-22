@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -13,6 +12,7 @@ import (
 type World struct {
 	chunks   map[[2]int]*Chunk
 	textures map[string]Texture
+	noise    *Noise
 }
 
 func (w *World) Update() {
@@ -87,35 +87,20 @@ func NewWorld(size int) *World {
 	world := &World{
 		chunks:   make(map[[2]int]*Chunk),
 		textures: map[string]Texture{},
+		noise:    &Noise{},
 	}
 
 	world.LoadTextures()
 
-	var wg sync.WaitGroup
-	chunkChannel := make(chan *Chunk, size*size*4) // Buffered channel to handle all chunks
-
-	createChunk := func(x, z int) {
-		defer wg.Done()
-		chunk := NewChunk(world, x, z, 16)
-		chunk.World = world
-		chunkChannel <- chunk
-	}
-
 	for x := -size; x < size; x++ {
 		for z := -size; z < size; z++ {
-			wg.Add(1)
-			go createChunk(x, z)
+			c := NewChunk(world, x, z, 16)
+			world.chunks[[2]int{x, z}] = c
 		}
 	}
 
-	go func() {
-		wg.Wait()
-		close(chunkChannel)
-	}()
-
-	for chunk := range chunkChannel {
+	for _, chunk := range world.chunks {
 		chunk.Initialize()
-		world.chunks[[2]int{chunk.Position[0], chunk.Position[1]}] = chunk
 	}
 
 	return world

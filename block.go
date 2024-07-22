@@ -51,51 +51,54 @@ func (b *Block) CullFaces(c *Chunk) {
 		b.Faces[i].Visible = neighborBlock != nil && neighborBlock.Type == Air
 	}
 
-	if position.X() == 15 {
-		if !c.HasRightNeighbors() {
-			b.Faces[Right].Visible = false
+	if position.X() == 0 {
+		leftNeighborChunk := c.LeftNeighbor()
+		if leftNeighborChunk == nil {
+			b.Faces[Left].Visible = false
 		} else {
-			neighborBlock := c.GetBlock(int(position.X()-1), int(position.Y()), int(position.Z()))
-			if neighborBlock.IsSolid() {
-				b.Faces[Left].Visible = false
+			neighborBlock := leftNeighborChunk.GetBlock(int(15), int(position.Y()), int(position.Z()))
+			if !neighborBlock.IsSolid() {
+				b.Faces[Left].Visible = true
 			}
-
 		}
 	}
 
-	if position.X() == 0 {
-		if !c.HasLeftNeighbors() {
-			b.Faces[Left].Visible = false
+	if position.X() == 15 {
+		rightNeighborChunk := c.RightNeighbor()
+		if rightNeighborChunk == nil {
+			b.Faces[Right].Visible = false
 		} else {
-			neighborBlock := c.GetBlock(int(position.X()+1), int(position.Y()), int(position.Z()))
-			if neighborBlock.IsSolid() {
-				b.Faces[Left].Visible = false
+			neighborBlock := rightNeighborChunk.GetBlock(int(0), int(position.Y()), int(position.Z()))
+			if !neighborBlock.IsSolid() {
+				b.Faces[Right].Visible = true
+			}
+		}
+
+	}
+
+	if position.Z() == 0 {
+		backNeighborChunk := c.BackNeighbor()
+		if backNeighborChunk == nil {
+			b.Faces[Back].Visible = false
+		} else {
+			neighborBlock := backNeighborChunk.GetBlock(int(position.X()), int(position.Y()), int(15))
+			if !neighborBlock.IsSolid() {
+				b.Faces[Back].Visible = true
 			}
 		}
 	}
 
 	if position.Z() == 15 {
-		if !c.HasFrontNeighbors() {
+		frontNeighborChunk := c.FrontNeighbor()
+		if frontNeighborChunk == nil {
 			b.Faces[Front].Visible = false
 		} else {
-			neighborBlock := c.GetBlock(int(position.X()), int(position.Y()), int(position.Z()-1))
-			if neighborBlock.IsSolid() {
-				b.Faces[Left].Visible = false
+			neighborBlock := frontNeighborChunk.GetBlock(int(position.X()), int(position.Y()), int(0))
+			if !neighborBlock.IsSolid() {
+				b.Faces[Front].Visible = true
 			}
-
 		}
-	}
 
-	if position.Z() == 0 {
-		if !c.HasBackNeighbors() {
-			b.Faces[Back].Visible = false
-		} else {
-			neighborBlock := c.GetBlock(int(position.X()), int(position.Y()), int(position.Z()+1))
-			if neighborBlock.IsSolid() {
-				b.Faces[Back].Visible = false
-			}
-
-		}
 	}
 
 }
@@ -116,48 +119,53 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 
 	color := clr.ToVec4()
 
+	index := f.Texture.Index
+	// if direction == Back {
+	// 	index = 0
+	// }
+
 	switch direction {
 	case Right:
 		faceVertices = []float32{
-			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(f.Texture.Index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(f.Texture.Index), // Top-right
-			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(f.Texture.Index), // Top-left
-			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(f.Texture.Index), // Bottom-left
+			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
+			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
+			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
+			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
 		}
 	case Left:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(f.Texture.Index), // Bottom-right
-			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(f.Texture.Index), // Top-right
-			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(f.Texture.Index), // Top-left
-			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(f.Texture.Index), // Bottom-left
+			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
+			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
+			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
+			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
 		}
 	case Top:
 		faceVertices = []float32{
-			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(f.Texture.Index), // Bottom-left
-			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(f.Texture.Index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(f.Texture.Index), // Top-right
-			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(f.Texture.Index), // Top-left
+			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-left
+			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Bottom-right
+			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-right
+			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Top-left
 		}
 	case Bottom:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(f.Texture.Index), // Bottom-left
-			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(f.Texture.Index), // Bottom-right
-			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(f.Texture.Index), // Top-right
-			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(f.Texture.Index), // Top-left
+			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-left
+			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Bottom-right
+			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-right
+			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Top-left
 		}
 	case Front:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(f.Texture.Index), // Bottom-left
-			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(f.Texture.Index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(f.Texture.Index), // Top-right
-			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(f.Texture.Index), // Top-left
+			float32(x), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
+			float32(x + 1), float32(y), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
+			float32(x + 1), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
+			float32(x), float32(y + 1), float32(z + 1), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
 		}
 	case Back:
 		faceVertices = []float32{
-			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(f.Texture.Index), // Bottom-left
-			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(f.Texture.Index), // Bottom-right
-			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(f.Texture.Index), // Top-right
-			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(f.Texture.Index), // Top-left
+			float32(x), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 1.0, float32(index), // Bottom-left
+			float32(x + 1), float32(y), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 1.0, float32(index), // Bottom-right
+			float32(x + 1), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 0.0, 0.0, float32(index), // Top-right
+			float32(x), float32(y + 1), float32(z), color[0], color[1], color[2], color[3], float32(alpha), 1.0, 0.0, float32(index), // Top-left
 		}
 	}
 

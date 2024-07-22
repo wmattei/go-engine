@@ -26,33 +26,33 @@ func (c *Chunk) GetBlock(x, y, z int) *Block {
 	return c.Blocks[[3]int{x, y, z}]
 }
 
-func (c *Chunk) HasRightNeighbors() bool {
+func (c *Chunk) RightNeighbor() *Chunk {
 	if len(c.World.chunks) <= 1 {
-		return false
+		return nil
 	}
 
-	return c.World.chunks[[2]int{c.Position[0] + 1, c.Position[1]}] != nil
+	return c.World.chunks[[2]int{c.Position[0] + 1, c.Position[1]}]
 }
 
-func (c *Chunk) HasLeftNeighbors() bool {
+func (c *Chunk) LeftNeighbor() *Chunk {
 	if len(c.World.chunks) <= 1 {
-		return false
+		return nil
 	}
-	return c.World.chunks[[2]int{c.Position[0] - 1, c.Position[1]}] != nil
+	return c.World.chunks[[2]int{c.Position[0] - 1, c.Position[1]}]
 }
 
-func (c *Chunk) HasFrontNeighbors() bool {
+func (c *Chunk) FrontNeighbor() *Chunk {
 	if len(c.World.chunks) <= 1 {
-		return false
+		return nil
 	}
-	return c.World.chunks[[2]int{c.Position[0], c.Position[1] + 1}] != nil
+	return c.World.chunks[[2]int{c.Position[0], c.Position[1] + 1}]
 }
 
-func (c *Chunk) HasBackNeighbors() bool {
+func (c *Chunk) BackNeighbor() *Chunk {
 	if len(c.World.chunks) <= 1 {
-		return false
+		return nil
 	}
-	return c.World.chunks[[2]int{c.Position[0], c.Position[1] - 1}] != nil
+	return c.World.chunks[[2]int{c.Position[0], c.Position[1] - 1}]
 }
 
 func (c *Chunk) Update() {
@@ -104,6 +104,9 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 		for y := 0; y < WORLD_HEIGHT; y++ {
 			for z := 0; z < 16; z++ {
 				block := chunk.At(x, y, z)
+				// if x == 15 {
+				// 	continue
+				// }
 				if block.Type != Air {
 					block.CullFaces(chunk)
 					for direction, face := range block.Faces {
@@ -131,13 +134,17 @@ func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 	chunk := &Chunk{
 		Position: [2]int{chunkX, chunkZ},
 		Blocks:   make(map[[3]int]*Block),
+		World:    world,
 	}
 
 	for x := 0; x < size; x++ {
 		for z := 0; z < size; z++ {
 			for y := 0; y < WORLD_HEIGHT; y++ {
+
+				height := int(world.noise.GetHeight(x+chunkX*16, z+chunkZ*16))
+
 				blockType := Air
-				if y <= SEA_LEVEL {
+				if y <= (height + SEA_LEVEL) {
 					blockType = Grass
 				}
 				block := world.NewBlock(float32(x), float32(y), float32(z), blockType)
