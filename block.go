@@ -16,14 +16,15 @@ var (
 type Face struct {
 	Visible bool
 	Texture *Texture
-	Normal  *minemath.Vec3
+	Normal  minemath.Vec3
 }
 
 type Block struct {
-	Type     BlockType
-	Faces    [6]*Face
-	Color    *Color
-	Position *minemath.Vec3
+	Type  BlockType
+	Faces [6]Face
+	Color Color
+
+	NeedsCulling bool
 }
 
 type Direction int
@@ -46,76 +47,51 @@ const (
 
 func (b *Block) Update(w *Chunk) {}
 
-func (b *Block) CullFaces(c *Chunk) {
-	position := b.Position
-	neighbors := [6][3]float32{
-		{position.X() + 1, position.Y(), position.Z()}, // right
-		{position.X() - 1, position.Y(), position.Z()}, // left
-		{position.X(), position.Y() + 1, position.Z()}, // top
-		{position.X(), position.Y() - 1, position.Z()}, // bottom
-		{position.X(), position.Y(), position.Z() + 1}, // front
-		{position.X(), position.Y(), position.Z() - 1}, // back
+func (b *Block) CullFaces(c *Chunk, position [3]int) {
+	posX, posY, posZ := position[0], position[1], position[2]
+
+	neighbors := [6][3]int{
+		{posX + 1, posY, posZ}, // right
+		{posX - 1, posY, posZ}, // left
+		{posX, posY + 1, posZ}, // top
+		{posX, posY - 1, posZ}, // bottom
+		{posX, posY, posZ + 1}, // front
+		{posX, posY, posZ - 1}, // back
 	}
+
 	for i, n := range neighbors {
 		neighborBlock := c.At(int(n[0]), int(n[1]), int(n[2]))
 		b.Faces[i].Visible = neighborBlock != nil && neighborBlock.Type == Air
 	}
 
-	if position.X() == 0 {
-		leftNeighborChunk := c.LeftNeighbor()
-		if leftNeighborChunk == nil {
-			b.Faces[Left].Visible = false
-		} else {
-			neighborBlock := leftNeighborChunk.GetBlock(int(15), int(position.Y()), int(position.Z()))
-			if !neighborBlock.IsSolid() {
-				b.Faces[Left].Visible = true
-			}
-		}
+	if posX == 0 {
+		b.checkNeighborChunkFace(c.LeftNeighbor(), 15, posY, posZ, Left)
 	}
-
-	if position.X() == 15 {
-		rightNeighborChunk := c.RightNeighbor()
-		if rightNeighborChunk == nil {
-			b.Faces[Right].Visible = false
-		} else {
-			neighborBlock := rightNeighborChunk.GetBlock(int(0), int(position.Y()), int(position.Z()))
-			if !neighborBlock.IsSolid() {
-				b.Faces[Right].Visible = true
-			}
-		}
-
+	if posX == 15 {
+		b.checkNeighborChunkFace(c.RightNeighbor(), 0, posY, posZ, Right)
 	}
-
-	if position.Z() == 0 {
-		backNeighborChunk := c.BackNeighbor()
-		if backNeighborChunk == nil {
-			b.Faces[Back].Visible = false
-		} else {
-			neighborBlock := backNeighborChunk.GetBlock(int(position.X()), int(position.Y()), int(15))
-			if !neighborBlock.IsSolid() {
-				b.Faces[Back].Visible = true
-			}
-		}
+	if posZ == 0 {
+		b.checkNeighborChunkFace(c.BackNeighbor(), posX, posY, 15, Back)
 	}
-
-	if position.Z() == 15 {
-		frontNeighborChunk := c.FrontNeighbor()
-		if frontNeighborChunk == nil {
-			b.Faces[Front].Visible = false
-		} else {
-			neighborBlock := frontNeighborChunk.GetBlock(int(position.X()), int(position.Y()), int(0))
-			if !neighborBlock.IsSolid() {
-				b.Faces[Front].Visible = true
-			}
-		}
-
+	if posZ == 15 {
+		b.checkNeighborChunkFace(c.FrontNeighbor(), posX, posY, 0, Front)
 	}
+}
 
+func (b *Block) checkNeighborChunkFace(neighborChunk *Chunk, x, y, z int, face Direction) {
+	if neighborChunk == nil {
+		b.Faces[face].Visible = false
+	} else {
+		neighborBlock := neighborChunk.At(x, y, z)
+		b.Faces[face].Visible = !neighborBlock.IsSolid()
+	}
 }
 
 func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffset uint32, lightDir minemath.Vec3) ([]float32, []uint32) {
 	var faceVertices []float32
 	var faceIndices []uint32
+
+	// fmt.Println(x, y, z, string(direction))
 
 	var clr *Color
 	alpha := 1.0
@@ -127,16 +103,15 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 		alpha = 0.0
 	}
 
-	intensity := minemath.CalculateLightIntensity(*f.Normal, lightDir)
-
 	color := clr.ToVec4()
 
+	intensity := minemath.CalculateLightIntensity(f.Normal, lightDir)
 	color[0] = color[0] * intensity
 	color[1] = color[1] * intensity
 	color[2] = color[2] * intensity
 
 	index := f.Texture.Index
-	// if direction == Back {
+	// if x == 0 {
 	// 	index = 0
 	// }
 

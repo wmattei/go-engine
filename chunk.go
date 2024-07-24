@@ -8,9 +8,10 @@ import (
 
 const WORLD_HEIGHT = 164
 const SEA_LEVEL = 64
+const MaxBlocksPerChunk = 16 * 16 * WORLD_HEIGHT
 
 type Chunk struct {
-	Blocks   map[[3]int]*Block
+	Blocks   [][][]*Block
 	Position [2]int
 
 	VAO      uint32
@@ -20,10 +21,8 @@ type Chunk struct {
 	Indices  []uint32
 
 	World *World
-}
 
-func (c *Chunk) GetBlock(x, y, z int) *Block {
-	return c.Blocks[[3]int{x, y, z}]
+	SolidBlocks map[[3]int]struct{}
 }
 
 func (c *Chunk) RightNeighbor() *Chunk {
@@ -55,10 +54,9 @@ func (c *Chunk) BackNeighbor() *Chunk {
 	return c.World.chunks[[2]int{c.Position[0], c.Position[1] - 1}]
 }
 
-func (c *Chunk) Update() {
-	for _, block := range c.Blocks {
-		block.Update(c)
-	}
+func (chunk *Chunk) GenerateMesh() {
+	chunk.Vertices, chunk.Indices = chunk.generateMeshData()
+
 }
 
 func (chunk *Chunk) Initialize() {
@@ -66,15 +64,77 @@ func (chunk *Chunk) Initialize() {
 	gl.GenVertexArrays(1, &chunk.VAO)
 	gl.GenBuffers(1, &chunk.VBO)
 	gl.GenBuffers(1, &chunk.EBO)
+	chunk.GenerateMesh()
 	chunk.UpdateBuffers()
+}
+
+func (chunk *Chunk) Delete() {
+	gl.DeleteVertexArrays(1, &chunk.VAO)
+	gl.DeleteBuffers(1, &chunk.VBO)
+	gl.DeleteBuffers(1, &chunk.EBO)
+}
+
+func (chunk *Chunk) CullBlocksFaces() {
+	for pos := range chunk.SolidBlocks {
+		block := chunk.At(pos[0], pos[1], pos[2])
+		if block.NeedsCulling {
+			block.CullFaces(chunk, pos)
+		}
+	}
+}
+func (chunk *Chunk) CullRightEdgeBlocksFaces() {
+	for pos := range chunk.SolidBlocks {
+		if pos[0] != 15 {
+			continue
+		}
+		block := chunk.At(pos[0], pos[1], pos[2])
+		block.CullFaces(chunk, pos)
+	}
+}
+
+func (chunk *Chunk) CullLeftEdgeBlocksFaces() {
+	for pos := range chunk.SolidBlocks {
+		if pos[0] != 0 {
+			continue
+		}
+		block := chunk.At(pos[0], pos[1], pos[2])
+		block.CullFaces(chunk, pos)
+	}
+}
+
+func (chunk *Chunk) CullFrontEdgeBlocksFaces() {
+	for pos := range chunk.SolidBlocks {
+		if pos[2] != 15 {
+			continue
+		}
+		block := chunk.At(pos[0], pos[1], pos[2])
+		block.CullFaces(chunk, pos)
+	}
+}
+
+func (chunk *Chunk) CullBackEdgeBlocksFaces() {
+	for pos := range chunk.SolidBlocks {
+		if pos[2] != 0 {
+			continue
+		}
+		block := chunk.At(pos[0], pos[1], pos[2])
+		block.CullFaces(chunk, pos)
+	}
+}
+
+func (chunk *Chunk) GetAllNeighbors() []*Chunk {
+	neighbors := []*Chunk{
+		chunk.RightNeighbor(),
+		chunk.LeftNeighbor(),
+		chunk.FrontNeighbor(),
+		chunk.BackNeighbor(),
+	}
+
+	return neighbors
 }
 
 func (chunk *Chunk) UpdateBuffers() {
 	gl.BindVertexArray(chunk.VAO)
-
-	vertices, indices := chunk.generateMeshData()
-	chunk.Vertices = vertices
-	chunk.Indices = indices
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, chunk.VBO)
 	gl.BufferData(gl.ARRAY_BUFFER, len(chunk.Vertices)*4, gl.Ptr(chunk.Vertices), gl.STATIC_DRAW)
@@ -92,7 +152,6 @@ func (chunk *Chunk) UpdateBuffers() {
 	gl.EnableVertexAttribArray(3)
 
 	gl.BindVertexArray(0)
-
 }
 
 func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
@@ -110,7 +169,6 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 				// 	continue
 				// }
 				if block != nil && block.Type != Air {
-					block.CullFaces(chunk)
 					for direction, face := range block.Faces {
 						if face.Visible {
 							faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset, *lightDirection)
@@ -132,25 +190,55 @@ func (chunk *Chunk) Render() {
 	gl.BindVertexArray(0)
 }
 
+var airBlock = &Block{Type: Air}
+
 func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
+	// startedAt := time.Now()
+	// defer func() {
+	// 	elapsed := time.Since(startedAt)
+	// 	fmt.Printf("Generated chunk in %s\n", elapsed)
+	// }()
+	estimatedSize := size * size * WORLD_HEIGHT
 	chunk := &Chunk{
-		Position: [2]int{chunkX, chunkZ},
-		Blocks:   make(map[[3]int]*Block),
-		World:    world,
+		Position:    [2]int{chunkX, chunkZ},
+		Blocks:      make([][][]*Block, size),
+		SolidBlocks: make(map[[3]int]struct{}, estimatedSize),
+		World:       world,
 	}
 
+	grassSide := world.textures["grassside"]
+	grassTop := world.textures["grasstop"]
+
 	for x := 0; x < size; x++ {
+		chunk.Blocks[x] = make([][]*Block, size)
 		for z := 0; z < size; z++ {
+			chunk.Blocks[x][z] = make([]*Block, WORLD_HEIGHT)
+			chunkXPos := x + chunkX*16
+			chunkZPos := z + chunkZ*16
+
+			height := int(world.noise.GetHeight(chunkXPos, chunkZPos))
 			for y := 0; y < WORLD_HEIGHT; y++ {
-
-				height := int(world.noise.GetHeight(x+chunkX*16, z+chunkZ*16))
-
-				blockType := Air
-				if y <= (height + SEA_LEVEL) {
-					blockType = Grass
+				if y > (height + SEA_LEVEL) {
+					chunk.Blocks[x][z][y] = airBlock
+					continue
 				}
-				block := world.NewBlock(float32(x), float32(y), float32(z), blockType)
-				chunk.Blocks[[3]int{x, y, z}] = block
+
+				block := &Block{}
+				block.Type = Grass
+				block.Faces = [6]Face{
+					{Texture: &grassSide, Normal: normalRight, Visible: false},
+					{Texture: &grassSide, Normal: normalLeft, Visible: false},
+					{Texture: &grassTop, Normal: normalTop, Visible: false},
+					{Texture: &grassSide, Normal: normalBottom, Visible: false},
+					{Texture: &grassSide, Normal: normalFront, Visible: false},
+					{Texture: &grassSide, Normal: normalBack, Visible: false},
+				}
+
+				block.NeedsCulling = y == SEA_LEVEL+height
+				pos := [3]int{x, y, z}
+				chunk.SolidBlocks[pos] = struct{}{}
+				chunk.Blocks[x][z][y] = block
+
 			}
 		}
 	}
@@ -159,7 +247,10 @@ func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 }
 
 func (c *Chunk) At(x, y, z int) *Block {
-	return c.Blocks[[3]int{x, y, z}]
+	if x < 0 || x >= 16 || y < 0 || y >= WORLD_HEIGHT || z < 0 || z >= 16 {
+		return nil
+	}
+	return c.Blocks[x][z][y]
 }
 
 func (c *Chunk) GetModelMatrix() minemath.Mat4 {

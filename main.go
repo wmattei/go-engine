@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"runtime/pprof"
 	"time"
@@ -12,13 +13,17 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 	minemath "github.com/wmattei/minceraft/math"
 	"github.com/wmattei/minceraft/pkg/engine"
+
+	_ "net/http/pprof"
 )
 
-const RENDER_DISTANCE = 1
 const WIDTH = 1200
 const HEIGHT = 780
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	f, err := os.Create("cpu.prof")
 	if err != nil {
 		log.Fatal(err)
@@ -30,7 +35,7 @@ func main() {
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	world := NewWorld(10)
+	world := NewWorld(3)
 
 	// return
 	// world := NewSingleChunkWorld()
@@ -74,7 +79,7 @@ func main() {
 
 		HandleInput(window, cam)
 
-		// world.Update()
+		world.Update(cam)
 
 		view := cam.GetViewMatrix()
 		viewFlatten := view.Flatten()

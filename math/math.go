@@ -2,8 +2,9 @@ package minemath
 
 import "math"
 
-type Vec3 [3]float32
 type Vec2 [2]float32
+
+type Vec3 [3]float32
 
 func (v Vec3) Negate() Vec3 {
 	return Vec3{-v.X(), -v.Y(), -v.Z()}
@@ -21,13 +22,13 @@ func (v Vec3) Dot(other Vec3) float32 {
 	return v.X()*other.X() + v.Y()*other.Y() + v.Z()*other.Z()
 }
 
-func (v *Vec3) X() float32 {
+func (v Vec3) X() float32 {
 	return v[0]
 }
-func (v *Vec3) Y() float32 {
+func (v Vec3) Y() float32 {
 	return v[1]
 }
-func (v *Vec3) Z() float32 {
+func (v Vec3) Z() float32 {
 	return v[2]
 }
 
