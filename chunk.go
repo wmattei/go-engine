@@ -234,7 +234,7 @@ func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 					{Texture: &grassSide, Normal: normalBack, Visible: false},
 				}
 
-				block.NeedsCulling = y == SEA_LEVEL+height
+				block.NeedsCulling = y >= SEA_LEVEL+height-3
 				pos := [3]int{x, y, z}
 				chunk.SolidBlocks[pos] = struct{}{}
 				chunk.Blocks[x][z][y] = block

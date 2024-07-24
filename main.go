@@ -35,7 +35,7 @@ func main() {
 	program := engine.InitOpenGL()
 	gl.UseProgram(program)
 
-	world := NewWorld(3)
+	world := NewWorld(8)
 
 	// return
 	// world := NewSingleChunkWorld()
@@ -59,6 +59,8 @@ func main() {
 
 	SetupControls(window, cam)
 
+	glfw.SwapInterval(0)
+
 	lastTime := time.Now()
 	fpsTime := lastTime
 	frameCount := 0
@@ -66,6 +68,8 @@ func main() {
 
 	for !window.ShouldClose() {
 		currentTime := time.Now()
+
+		HandleInput(window, cam, float32(currentTime.Sub(lastTime).Seconds()))
 
 		lastTime = currentTime
 		frameCount++
@@ -76,8 +80,6 @@ func main() {
 			fpsTime = currentTime
 			window.SetTitle(fmt.Sprintf("FPS: %d", fps))
 		}
-
-		HandleInput(window, cam)
 
 		world.Update(cam)
 

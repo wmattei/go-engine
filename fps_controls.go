@@ -34,24 +34,24 @@ func SetupControls(window *glfw.Window, camera *engine.PerspectiveCamera) {
 	window.SetCursorPosCallback(mouseCallback)
 }
 
-func HandleInput(window *glfw.Window, camera *engine.PerspectiveCamera) {
+func HandleInput(window *glfw.Window, camera *engine.PerspectiveCamera, dt float32) {
 	if window.GetKey(glfw.KeyW) == glfw.Press {
-		camera.ProcessKeyboard("FORWARD")
+		camera.ProcessKeyboard("FORWARD", dt)
 	}
 	if window.GetKey(glfw.KeyS) == glfw.Press {
-		camera.ProcessKeyboard("BACKWARD")
+		camera.ProcessKeyboard("BACKWARD", dt)
 	}
 	if window.GetKey(glfw.KeyA) == glfw.Press {
-		camera.ProcessKeyboard("LEFT")
+		camera.ProcessKeyboard("LEFT", dt)
 	}
 	if window.GetKey(glfw.KeyD) == glfw.Press {
-		camera.ProcessKeyboard("RIGHT")
+		camera.ProcessKeyboard("RIGHT", dt)
 	}
 	if window.GetKey(glfw.KeySpace) == glfw.Press {
-		camera.ProcessKeyboard("UP")
+		camera.ProcessKeyboard("UP", dt)
 	}
 	if window.GetKey(glfw.KeyLeftShift) == glfw.Press {
-		camera.ProcessKeyboard("DOWN")
+		camera.ProcessKeyboard("DOWN", dt)
 	}
 
 	if window.GetKey(glfw.KeyEscape) == glfw.Press {

@@ -76,8 +76,8 @@ func (cam *PerspectiveCamera) updateCameraVectors() {
 	cam.front = front
 }
 
-func (cam *PerspectiveCamera) ProcessKeyboard(direction string) {
-	velocity := float32(0.1)
+func (cam *PerspectiveCamera) ProcessKeyboard(direction string, dt float32) {
+	velocity := float32(dt * 10)
 
 	switch direction {
 	case "FORWARD":
