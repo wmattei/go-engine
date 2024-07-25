@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"sync"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -20,12 +21,21 @@ type World struct {
 }
 
 func (w *World) Update(camera *engine.PerspectiveCamera) {
-	cameraChunkX := int(camera.Position[0] / 16)
-	cameraChunkZ := int(camera.Position[2] / 16)
+	x, z := int(camera.Position[0]), int(camera.Position[2])
 
-	if cameraChunkX != w.activeChunk[0] || cameraChunkZ != w.activeChunk[1] {
-		w.activeChunk = [2]int{cameraChunkX, cameraChunkZ}
+	chunkX, chunkZ, _, _ := worldToChunkCoords(x, z)
+
+	if chunkX != w.activeChunk[0] || chunkZ != w.activeChunk[1] {
+		w.activeChunk = [2]int{chunkX, chunkZ}
 		w.LoadChunks()
+	}
+
+	for _, chunk := range w.chunks {
+		if chunk.NeedsUpdate {
+			chunk.GenerateMesh()
+			chunk.UpdateBuffers()
+			chunk.NeedsUpdate = false
+		}
 	}
 
 }
@@ -176,6 +186,8 @@ func NewWorld(size int) *World {
 
 	world.LoadTextures()
 
+	// centerChunk := NewChunk(world, 0, 0, 16)
+
 	for x := -size; x < size; x++ {
 		for z := -size; z < size; z++ {
 			c := NewChunk(world, x, z, 16)
@@ -191,4 +203,46 @@ func NewWorld(size int) *World {
 
 	return world
 
+}
+
+func (w *World) GetBlock(x, y, z int) *Block {
+	chunkX, chunkZ, posX, posZ := worldToChunkCoords(x, z)
+	activeChunk := w.chunks[[2]int{chunkX, chunkZ}]
+	return activeChunk.At(posX, y, posZ)
+}
+
+func (w *World) CheckCollisions(camera *engine.PerspectiveCamera) {
+	pos := camera.Position
+	x, y, z := int(math.Floor(float64(pos[0]))), int(math.Floor(float64(pos[1]))), int(math.Floor(float64(pos[2])))
+	block := w.GetBlock(x, y-1, z)
+
+	// fmt.Println(w.activeChunk)
+	if block == nil || !block.IsSolid() {
+		return
+	}
+
+	block.DebugColor = &RED
+	block.Chunk.NeedsUpdate = true
+
+	camera.Position[1] = float32(y + 1)
+}
+
+func worldToChunkCoords(x, z int) (chunkX, chunkZ, posInChunkX, posInChunkZ int) {
+
+	chunkX = x / 16
+	chunkZ = z / 16
+
+	posInChunkX = x % 16
+	posInChunkZ = z % 16
+
+	if posInChunkX < 0 {
+		posInChunkX += 16
+		chunkX--
+	}
+	if posInChunkZ < 0 {
+		posInChunkZ += 16
+		chunkZ--
+	}
+
+	return chunkX, chunkZ, posInChunkX, posInChunkZ
 }

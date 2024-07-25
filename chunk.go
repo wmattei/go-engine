@@ -23,6 +23,7 @@ type Chunk struct {
 	World *World
 
 	SolidBlocks map[[3]int]struct{}
+	NeedsUpdate bool
 }
 
 func (c *Chunk) RightNeighbor() *Chunk {
@@ -171,7 +172,7 @@ func (chunk *Chunk) generateMeshData() ([]float32, []uint32) {
 				if block != nil && block.Type != Air {
 					for direction, face := range block.Faces {
 						if face.Visible {
-							faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset, *lightDirection)
+							faceVertices, faceIndices := face.GetVerticesAndIndices(x, y, z, Direction(direction), indexOffset, *lightDirection, block.DebugColor)
 							vertices = append(vertices, faceVertices...)
 							indices = append(indices, faceIndices...)
 							indexOffset += 4
@@ -224,6 +225,7 @@ func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 				}
 
 				block := &Block{}
+				block.Chunk = chunk
 				block.Type = Grass
 				block.Faces = [6]Face{
 					{Texture: &grassSide, Normal: normalRight, Visible: false},
@@ -233,6 +235,16 @@ func NewChunk(world *World, chunkX, chunkZ, size int) *Chunk {
 					{Texture: &grassSide, Normal: normalFront, Visible: false},
 					{Texture: &grassSide, Normal: normalBack, Visible: false},
 				}
+
+				// if chunkX == 0 && chunkZ == 0 {
+				// 	block.DebugColor = &BLUE
+				// }
+				// if chunkX == 0 && chunkZ == 1 {
+				// 	block.DebugColor = &RED
+				// }
+				// if chunkX == 0 && chunkZ == -1 {
+				// 	block.DebugColor = &GREEN
+				// }
 
 				block.NeedsCulling = y >= SEA_LEVEL+height-3
 				pos := [3]int{x, y, z}

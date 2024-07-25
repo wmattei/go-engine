@@ -42,7 +42,7 @@ func main() {
 	// world := NewSingleBlockWorld()
 
 	cam := engine.NewPerspectiveCamera(
-		[3]float32{10, 69, 0},
+		[3]float32{0, 89, 0},
 		[3]float32{0, 1, 0},
 		0,
 		0,
@@ -82,6 +82,7 @@ func main() {
 		}
 
 		world.Update(cam)
+		world.CheckCollisions(cam)
 
 		view := cam.GetViewMatrix()
 		viewFlatten := view.Flatten()

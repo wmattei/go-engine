@@ -7,7 +7,7 @@ import (
 )
 
 type PerspectiveCamera struct {
-	Position minemath.Vec3
+	Position *minemath.Vec3
 	front    minemath.Vec3
 	worldUp  minemath.Vec3
 
@@ -22,7 +22,7 @@ type PerspectiveCamera struct {
 
 func NewPerspectiveCamera(position, up minemath.Vec3, yaw, pitch, fov, aspect, near, far float32) *PerspectiveCamera {
 	camera := &PerspectiveCamera{
-		Position: position,
+		Position: &position,
 		worldUp:  up,
 		yaw:      yaw,
 		pitch:    pitch,
@@ -38,7 +38,7 @@ func NewPerspectiveCamera(position, up minemath.Vec3, yaw, pitch, fov, aspect, n
 }
 
 func (cam *PerspectiveCamera) GetViewMatrix() minemath.Mat4 {
-	return minemath.LookAt(cam.Position, minemath.Add(cam.Position, cam.front), cam.worldUp)
+	return minemath.LookAt(*cam.Position, minemath.Add(*cam.Position, cam.front), cam.worldUp)
 }
 
 func (cam *PerspectiveCamera) GetProjectionMatrix() minemath.Mat4 {

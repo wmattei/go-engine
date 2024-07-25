@@ -20,11 +20,12 @@ type Face struct {
 }
 
 type Block struct {
-	Type  BlockType
-	Faces [6]Face
-	Color Color
+	Type       BlockType
+	Faces      [6]Face
+	DebugColor *Color
 
 	NeedsCulling bool
+	Chunk        *Chunk
 }
 
 type Direction int
@@ -87,7 +88,7 @@ func (b *Block) checkNeighborChunkFace(neighborChunk *Chunk, x, y, z int, face D
 	}
 }
 
-func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffset uint32, lightDir minemath.Vec3) ([]float32, []uint32) {
+func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffset uint32, lightDir minemath.Vec3, debugColor *Color) ([]float32, []uint32) {
 	var faceVertices []float32
 	var faceIndices []uint32
 
@@ -103,6 +104,10 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 		alpha = 0.0
 	}
 
+	if debugColor != nil {
+		clr = debugColor
+	}
+
 	color := clr.ToVec4()
 
 	intensity := minemath.CalculateLightIntensity(f.Normal, lightDir)
@@ -112,7 +117,10 @@ func (f *Face) GetVerticesAndIndices(x, y, z int, direction Direction, indexOffs
 
 	index := f.Texture.Index
 	// if x == 0 {
-	// 	index = 0
+	// 	color = minemath.Vec4{0, 0, 1, 1}
+	// }
+	// if z == 0 {
+	// 	color = minemath.Vec4{0, 0, 1, 1}
 	// }
 
 	switch direction {
