@@ -71,6 +71,9 @@ func main() {
 
 		HandleInput(window, cam, float32(currentTime.Sub(lastTime).Seconds()))
 
+		world.CheckCollisions(cam)
+		world.Update(cam)
+
 		lastTime = currentTime
 		frameCount++
 
@@ -80,9 +83,6 @@ func main() {
 			fpsTime = currentTime
 			window.SetTitle(fmt.Sprintf("FPS: %d", fps))
 		}
-
-		world.Update(cam)
-		world.CheckCollisions(cam)
 
 		view := cam.GetViewMatrix()
 		viewFlatten := view.Flatten()

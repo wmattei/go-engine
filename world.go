@@ -214,17 +214,15 @@ func (w *World) GetBlock(x, y, z int) *Block {
 func (w *World) CheckCollisions(camera *engine.PerspectiveCamera) {
 	pos := camera.Position
 	x, y, z := int(math.Floor(float64(pos[0]))), int(math.Floor(float64(pos[1]))), int(math.Floor(float64(pos[2])))
-	block := w.GetBlock(x, y-1, z)
 
-	// fmt.Println(w.activeChunk)
-	if block == nil || !block.IsSolid() {
+	block := w.GetBlock(x, y-1, z)
+	if block != nil && block.IsSolid() {
+		block.DebugColor = &RED
+		block.Chunk.NeedsUpdate = true
+		camera.Position[1] = float32(y + 1)
+
 		return
 	}
-
-	block.DebugColor = &RED
-	block.Chunk.NeedsUpdate = true
-
-	camera.Position[1] = float32(y + 1)
 }
 
 func worldToChunkCoords(x, z int) (chunkX, chunkZ, posInChunkX, posInChunkZ int) {
